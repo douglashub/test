@@ -3,6 +3,7 @@ import cors from 'cors';
 import { TopicHierarchyService } from './domain/services/TopicHierarchyService';
 import { InMemoryTopicRepository } from './infrastructure/repositories/InMemoryTopicRepository';
 import { Topic } from './domain/entities/Topic';
+import userRouter from './routes/user.routes';
 
 export const app = express();
 const port = process.env.PORT || 3000;
@@ -12,6 +13,8 @@ export const topicHierarchyService = new TopicHierarchyService(topicRepository);
 
 app.use(cors());
 app.use(express.json());
+
+app.use('/api/users', userRouter);
 
 app.use((req, res, next) => {
   const start = Date.now();

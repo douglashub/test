@@ -1,122 +1,136 @@
-# Knowledge Base Topic Management System
+# Dynamic Knowledge Base API
 
-A RESTful API service for managing hierarchical topics in a knowledge base system. This service allows you to organize topics in a tree structure and find relationships between topics.
+A RESTful API for a hierarchical knowledge base system with version control, topic management, and role-based permissions.
 
 ## Features
 
-- **Topic Hierarchy Management**: Create and manage topics in a hierarchical structure
-- **Path Finding**: Find the shortest path between any two topics in the hierarchy
-- **Versioning**: Built-in support for topic versioning
-- **RESTful API**: Clean and well-documented API endpoints
-- **Comprehensive Logging**: Detailed request/response logging with timing information
+- **Topic Management**: Create, read, update, and delete topics with version control
+- **Hierarchical Structure**: Topics can have parent-child relationships
+- **Resource Management**: Associate resources (links, documents) with topics
+- **User Authentication**: JWT-based authentication system
+- **Role-Based Authorization**: Admin, Editor, and Viewer roles with different permissions
+- **Path Finding Algorithm**: Custom algorithm to find the shortest path between topics
 
-## Getting Started
+## Tech Stack
 
-### Prerequisites
+- Node.js with TypeScript
+- Express.js for API routing
+- In-memory database for persistence
+- JWT for authentication
+- Jest for testing
 
-- Node.js
-- npm or yarn
+## Project Structure
 
-### Installation
+```
+src/
+├── controllers/        # API endpoint handlers
+├── domain/
+│   ├── entities/       # Domain models (Topic, Resource, User)
+│   ├── repositories/   # Interfaces for data access
+│   └── services/       # Business logic
+├── infrastructure/
+│   └── repositories/   # Implementation of repositories
+├── middlewares/        # Express middlewares
+├── routes/             # API route definitions
+└── tests/              # Integration and unit tests
+```
+
+## Installation
 
 1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the server:
-   ```bash
-   npm start
-   ```
+2. Install dependencies
 
-The server will start on port 3000 (or the port specified in the PORT environment variable).
-
-## API Documentation
-
-### Get Topic Hierarchy
-
-```http
-GET /topics/:id/hierarchy
+```bash
+npm install
 ```
 
-Returns the complete hierarchy tree starting from the specified topic.
+3. Start the development server
 
-#### Response
-
-```json
-{
-  "id": "topic-id",
-  "name": "Topic Name",
-  "version": 1,
-  "children": [
-    {
-      "id": "child-topic-id",
-      "name": "Child Topic Name",
-      "version": 1,
-      "children": []
-    }
-  ]
-}
+```bash
+npm run dev
 ```
 
-### Find Path Between Topics
+## API Endpoints
 
-```http
-GET /topics/path?startId={startId}&endId={endId}
-```
+### Authentication
 
-Finds the shortest path between two topics in the hierarchy.
+- `POST /api/users/register` - Register a new user
+- `POST /api/users/login` - Login and get a JWT token
 
-#### Response
+### Users
 
-```json
-{
-  "path": ["start-topic-id", "intermediate-topic-id", "end-topic-id"]
-}
-```
+- `GET /api/users/:id` - Get user details (all authenticated users)
+- `PATCH /api/users/:id` - Update user (admin only)
+- `DELETE /api/users/:id` - Delete user (admin only)
 
-## Error Handling
+### Topics
 
-The API uses standard HTTP status codes:
+- `GET /topics/:id/hierarchy` - Get a topic and all its children recursively
+- `GET /topics/path?startId=:startId&endId=:endId` - Find the shortest path between two topics
+- `POST /topics` - Create a new topic (admin, editor)
+- `GET /topics/:id` - Get a topic by ID
+- `PUT /topics/:id` - Update a topic (admin, editor)
+- `DELETE /topics/:id` - Delete a topic (admin only)
 
-- `200`: Success
-- `400`: Bad Request (e.g., missing parameters)
-- `404`: Not Found (topic doesn't exist or no path found)
-- `500`: Internal Server Error
+## User Roles and Permissions
 
-## Testing
+- **Admin**: Can perform all operations, including user management
+- **Editor**: Can create, read, and update topics, but cannot delete them or manage users
+- **Viewer**: Can only read topics and resources
 
-The project includes both unit and integration tests. Run the test suite with:
+## Running Tests
 
 ```bash
 npm test
 ```
 
-## Development
+For code coverage report:
 
-### Project Structure
-
-```
-src/
-  ├── domain/
-  │   ├── entities/      # Core business entities
-  │   ├── repositories/  # Repository interfaces
-  │   └── services/      # Business logic
-  ├── infrastructure/
-  │   └── repositories/  # Repository implementations
-  ├── tests/
-  │   └── integration/   # Integration tests
-  └── index.ts          # Application entry point
+```bash
+npm run test:coverage
 ```
 
-### Test Data
+## Design Patterns Used
 
-When starting the server in non-test mode, it automatically generates test data with example topics and relationships. The server outputs the generated topic IDs and example curl commands for testing the API.
+- **Factory Pattern**: Static create methods in entity classes
+- **Strategy Pattern**: Role-based permission system
+- **Composite Pattern**: Topic hierarchy representation
+- **Repository Pattern**: Abstraction for data access
 
-## Contributing
+## Domain-Driven Design
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+The project follows DDD principles with a clear separation between:
+- Domain entities
+- Repository interfaces
+- Application services
+- Infrastructure implementations
 
-## License
+## Version Control for Topics
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+Each update to a topic creates a new version rather than overwriting the existing data. This maintains a history of changes and allows retrieving previous versions.
+
+## Example Usage
+
+### Authentication
+
+```bash
+# Register a new admin user
+curl -X POST http://localhost:3000/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Admin User", "email":"admin@example.com", "password":"password", "role":"ADMIN"}'
+
+# Login to get JWT token
+curl -X POST http://localhost:3000/api/users/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@example.com", "password":"password"}'
+```
+
+### Topics
+
+```bash
+# Get topic hierarchy
+curl -X GET http://localhost:3000/topics/{topicId}/hierarchy
+
+# Find path between topics
+curl -X GET "http://localhost:3000/topics/path?startId={startTopicId}&endId={endTopicId}"
+```
