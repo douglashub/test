@@ -56,4 +56,8 @@ export class InMemoryTopicRepository implements TopicRepository {
   async findAllVersions(id: string): Promise<Topic[]> {
     return this.topics.get(id) || [];
   }
+  
+  async clear(): Promise<void> {
+    this.topics.clear();
+  }
 }
