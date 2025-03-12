@@ -6,6 +6,9 @@ import { UserRole } from '../domain/entities/User';
 
 const router = Router();
 
+// Path finding endpoint - must come before /:id routes to avoid conflict
+router.get('/path', TopicController.findShortestPath);
+
 // CRUD Operations
 router.post('/', 
   authMiddleware,

@@ -19,7 +19,10 @@ export default function authMiddleware(req: Request, res: Response, next: NextFu
   const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized - Missing token' });
+    return res.status(401).json({ 
+      success: false,
+      error: { message: 'Unauthorized - Missing token' }
+    });
   }
 
   const token = authHeader.split(' ')[1];
@@ -41,6 +44,9 @@ export default function authMiddleware(req: Request, res: Response, next: NextFu
     
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Unauthorized - Invalid token' });
+    res.status(401).json({ 
+      success: false,
+      error: { message: 'Unauthorized - Invalid token' }
+    });
   }
 }

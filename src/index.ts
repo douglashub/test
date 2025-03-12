@@ -1,27 +1,19 @@
 import express from 'express';
 import cors from 'cors';
-import { Topic } from './domain/entities/Topic';
 import userRouter from './routes/user.routes';
 import topicRouter from './routes/topic.routes';
-import authMiddleware from './middlewares/auth.middleware';
 import errorHandler from './middlewares/errorHandler.middleware';
 import { topicRepository } from './config/services';
+import { Topic } from './domain/entities/Topic';
 
 export const app = express();
 const port = process.env.PORT || 3000;
 
-// Convert middlewares to global registration
-app.use(authMiddleware);
-
+// Global middlewares
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/users', userRouter);
-app.use('/api/topics', topicRouter);
-
-// Add error handling middleware
-app.use(errorHandler);
-
+// Logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   
@@ -47,7 +39,7 @@ app.use((req, res, next) => {
   
   const originalEnd = res.end;
   
-res.end = function(chunk?: any, ...args: any[]): any {
+  res.end = function(chunk?: any, ...args: any[]): any {
     const duration = Date.now() - start;
 
     let bodyToLog = responseBody || (chunk ? chunk.toString() : '');
@@ -68,14 +60,17 @@ res.end = function(chunk?: any, ...args: any[]): any {
       ${bodyDisplay}`);
 
     return originalEnd.apply(this, arguments as any);
-};
-
+  };
   
   next();
 });
 
-// Routes
+// Register routes
+app.use('/api/users', userRouter);
+app.use('/api/topics', topicRouter);
 
+// Global error handler should be last
+app.use(errorHandler);
 
 // Function to generate test data
 async function generateTestData() {
@@ -106,19 +101,19 @@ async function generateTestData() {
   // Print example curl commands
   console.log('\nTest this API with curl commands:');
   console.log(`\n# Get hierarchy for root topic:`);
-  console.log(`curl -X GET http://localhost:${port}/topics/${rootTopic.getId()}/hierarchy`);
+  console.log(`curl -X GET http://localhost:${port}/api/topics/${rootTopic.getId()}/hierarchy`);
   
   console.log(`\n# Get hierarchy for non-existent topic:`);
-  console.log(`curl -X GET http://localhost:${port}/topics/non-existent-id/hierarchy`);
+  console.log(`curl -X GET http://localhost:${port}/api/topics/non-existent-id/hierarchy`);
   
   console.log(`\n# Find path from root to grandchild:`);
-  console.log(`curl -X GET "http://localhost:${port}/topics/path?startId=${rootTopic.getId()}&endId=${grandchildTopic.getId()}"`);
+  console.log(`curl -X GET "http://localhost:${port}/api/topics/path?startId=${rootTopic.getId()}&endId=${grandchildTopic.getId()}"`);
   
   console.log(`\n# Find path with missing parameters:`);
-  console.log(`curl -X GET http://localhost:${port}/topics/path`);
+  console.log(`curl -X GET http://localhost:${port}/api/topics/path`);
   
   console.log(`\n# Find path between unconnected topics:`);
-  console.log(`curl -X GET "http://localhost:${port}/topics/path?startId=${rootTopic.getId()}&endId=${unconnectedTopic.getId()}"`);
+  console.log(`curl -X GET "http://localhost:${port}/api/topics/path?startId=${rootTopic.getId()}&endId=${unconnectedTopic.getId()}"`);
 }
 
 // Start server
