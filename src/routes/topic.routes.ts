@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import TopicController from '../controllers/topic.controller.js';
+import TopicController from '../controllers/topic.controller';
 import authMiddleware from '../middlewares/auth.middleware';
 import roleMiddleware from '../middlewares/role.middleware';
 import { UserRole } from '../domain/entities/User';

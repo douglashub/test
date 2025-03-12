@@ -30,40 +30,48 @@ export class TopicHierarchyService {
   }
 
   async findShortestPath(startTopicId: string, endTopicId: string): Promise<string[]> {
+    // Validate that both topics exist
+    const startTopic = await this.topicRepository.findById(startTopicId);
+    const endTopic = await this.topicRepository.findById(endTopicId);
+    
+    if (!startTopic || !endTopic) {
+      throw new Error(`One or both topics not found: ${startTopicId}, ${endTopicId}`);
+    }
+    
     const visited = new Set<string>();
     const queue: { topicId: string; path: string[] }[] = [];
     
     queue.push({ topicId: startTopicId, path: [startTopicId] });
     visited.add(startTopicId);
-
+  
     while (queue.length > 0) {
       const { topicId, path } = queue.shift()!;
       
       if (topicId === endTopicId) {
         return path;
       }
-
+  
+      // Check parent topic
       const topic = await this.topicRepository.findById(topicId);
       if (!topic) continue;
-
-      // Check parent topic
+      
       const parentId = topic.getParentTopicId();
       if (parentId && !visited.has(parentId)) {
-        queue.push({ topicId: parentId, path: [...path, parentId] });
         visited.add(parentId);
+        queue.push({ topicId: parentId, path: [...path, parentId] });
       }
-
+  
       // Check child topics
       const childTopics = await this.topicRepository.findByParentId(topicId);
       for (const childTopic of childTopics) {
         const childId = childTopic.getId();
         if (!visited.has(childId)) {
-          queue.push({ topicId: childId, path: [...path, childId] });
           visited.add(childId);
+          queue.push({ topicId: childId, path: [...path, childId] });
         }
       }
     }
-
+  
     throw new Error(`No path found between topics ${startTopicId} and ${endTopicId}`);
   }
 }

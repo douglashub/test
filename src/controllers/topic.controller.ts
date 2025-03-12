@@ -1,49 +1,61 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { Topic } from '../domain/entities/Topic';
+import { topicRepository, topicHierarchyService } from '../config/services';
 
 const TopicController = {
-  createTopic: async (req: Request, res: Response) => {
+  createTopic: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Implementation for creating a topic
-      res.status(201).json({ message: 'Topic created successfully' });
+      const { name, content, parentTopicId } = req.body;
+      const topic = Topic.create(name, content, parentTopicId);
+      await topicRepository.save(topic);
+      res.status(201).json(topic);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to create topic' });
+      next(error);
     }
   },
 
-  getTopicById: async (req: Request, res: Response) => {
+  getTopicHierarchy: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Implementation for getting a topic by ID
-      res.json({ message: 'Topic retrieved successfully' });
+      const hierarchy = await topicHierarchyService.getTopicHierarchy(req.params.id);
+      res.json(hierarchy);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to get topic' });
+      next(error);
     }
   },
 
-  getTopicHierarchy: async (req: Request, res: Response) => {
+  getTopicById: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Implementation for getting topic hierarchy
-      res.json({ message: 'Topic hierarchy retrieved successfully' });
+      const topic = await topicRepository.findById(req.params.id);
+      topic ? res.json(topic) : res.status(404).json({ error: 'Topic not found' });
     } catch (error) {
-      res.status(500).json({ error: 'Failed to get topic hierarchy' });
+      next(error);
     }
   },
 
-  updateTopic: async (req: Request, res: Response) => {
+  updateTopic: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Implementation for updating a topic
-      res.json({ message: 'Topic updated successfully' });
+      const topic = await topicRepository.findById(req.params.id);
+      if (!topic) {
+        return res.status(404).json({ error: 'Topic not found' });
+      }
+      const updatedTopic = topic.createNewVersion(req.body.content);
+      await topicRepository.save(updatedTopic);
+      res.json(updatedTopic);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to update topic' });
+      next(error);
     }
   },
 
-  deleteTopic: async (req: Request, res: Response) => {
+  deleteTopic: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Implementation for deleting a topic
-      res.json({ message: 'Topic deleted successfully' });
+      const exists = await topicRepository.exists(req.params.id);
+      if (!exists) {
+        return res.status(404).json({ error: 'Topic not found' });
+      }
+      await topicRepository.delete(req.params.id);
+      res.status(204).send();
     } catch (error) {
-      res.status(500).json({ error: 'Failed to delete topic' });
+      next(error);
     }
   }
 };
